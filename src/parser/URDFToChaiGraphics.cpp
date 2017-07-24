@@ -5,10 +5,10 @@
  *      Author: Shameek Ganguly
  */
 
-#include "URDFToChaiGraphics.h"
+#include "URDFToChaiGraphics.h" //ok
 
-#include <urdf/urdfdom_headers/urdf_model/include/urdf_model/model.h>
-#include <urdf/urdfdom/urdf_parser/include/urdf_parser/urdf_parser.h>
+#include <urdf/urdfdom_headers/urdf_model/include/urdf_model/model.h> //ok
+#include <urdf/urdfdom/urdf_parser/include/urdf_parser/urdf_parser.h> // need XML! 
 
 typedef my_shared_ptr<urdf::Link> LinkPtr;
 typedef const my_shared_ptr<const urdf::Link> ConstLinkPtr;

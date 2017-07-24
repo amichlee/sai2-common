@@ -1,12 +1,12 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8.12)
 
-PROJECT (SAI2-COMMON)
+PROJECT (SAI2-COMMON-LITE)
 SET (PROJECT_VERSION 0.1.0) #major version is zero for now since api will certainly change in future
 
 SET(CMAKE_CXX_FLAGS "-std=c++11 -I/usr/include -I/usr/local/include")
 
 # use KUKA proprietary dynamics library to compute the model class KukaRBDLModel. Default is OFF
-option(USE_KUKA_LBR_DYNAMICS "USE_KUKA_LBR_DYNAMICS" OFF)
+# option(USE_KUKA_LBR_DYNAMICS "USE_KUKA_LBR_DYNAMICS" OFF)
 
 # set default build to release with debug info. mimic'ed from RBDL project.
 IF(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -20,15 +20,41 @@ ENDIF()
 # -- this is required by Chai3d to pick the correct path for OpenGL headers
 FIND_PACKAGE(CHAI3D REQUIRED)
 ADD_DEFINITIONS(${CHAI3D_DEFINITIONS})
-if (CMAKE_SYSTEM_NAME MATCHES Darwin) 
-  ADD_DEFINITIONS(-D_MACOSX -DMACOSX)
-elseif (CMAKE_SYSTEM_NAME MATCHES Linux)
-  ADD_DEFINITIONS(-D_LINUX -DLINUX)
-endif () #NOTE: Windows is currently unsupported
+
+
+# HOW ORIGINALLY DONE BUT NO WINDOWS SUPPORT 
+#if (CMAKE_SYSTEM_NAME MATCHES Darwin) 
+ # ADD_DEFINITIONS(-D_MACOSX -DMACOSX)
+#elseif (CMAKE_SYSTEM_NAME MATCHES Linux)
+#  ADD_DEFINITIONS(-D_LINUX -DLINUX)
+#endif () #NOTE: Windows is currently unsupported
+
+# need to support windows!!! for cmake system name 
+
+# How chai3d currently defines system in cmake - mlee 
+if (${CMAKE_SYSTEM_NAME} MATCHES Windows)
+  set (OS "win")
+  if (${CMAKE_CL_64})
+    set (ARCH "x64")
+  else ()
+    set (ARCH "Win32")
+  endif ()
+elseif (${CMAKE_SYSTEM_NAME} MATCHES Linux)
+  set (OS "lin")
+  if (${CMAKE_SIZEOF_VOID_P} EQUAL 8)
+    set (ARCH "x86_64")
+  else ()
+    set (ARCH "i686")
+  endif ()
+elseif (${CMAKE_SYSTEM_NAME} MATCHES Darwin)
+  set (OS "mac")
+  set (ARCH "x86_64")
+endif ()
+
 LINK_DIRECTORIES(${CHAI3D_LIBRARY_DIRS})
 
-# include Sai2-Simulation
-FIND_PACKAGE(SAI2-SIMULATION REQUIRED)
+# lite version does not require sai2-simulation
+# FIND_PACKAGE(SAI2-SIMULATION REQUIRED)
 
 # include Eigen
 FIND_PACKAGE(Eigen3 REQUIRED)
@@ -36,22 +62,23 @@ FIND_PACKAGE(Eigen3 REQUIRED)
 # include RBDL
 FIND_PACKAGE(RBDL QUIET)
 
-# include Parser
-SET(PARSER_SOURCE ${PROJECT_SOURCE_DIR}/src/parser/URDFToDynamics3d.cpp
+# include Parser (no 3d dynamics)
+SET(PARSER_SOURCE #${PROJECT_SOURCE_DIR}/src/parser/URDFToDynamics3d.cpp
 	${PROJECT_SOURCE_DIR}/src/parser/URDFToChaiGraphics.cpp)
 
 # KUKA LBR Dynamics
-if (USE_KUKA_LBR_DYNAMICS)
-    set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/../KukaIIWA/KukaLBRDynamics) # Need to manually set the correct directory
-    find_package (KukaLBRDynamics REQUIRED)
-    include_directories(${KukaLBRDynamics_INCLUDE_DIRS})
+#if (USE_KUKA_LBR_DYNAMICS)
+ #   set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/../KukaIIWA/KukaLBRDynamics) # Need to manually set the correct directory
+  #  find_package (KukaLBRDynamics REQUIRED)
+   # include_directories(${KukaLBRDynamics_INCLUDE_DIRS})
     # target_link_libraries(${PROJECT_NAME} ${KukaLBRDynamics_LIBRARIES})
-    add_definitions(-DUSE_KUKA_LBR_DYNAMICS)
-endif(USE_KUKA_LBR_DYNAMICS)
+    #add_definitions(-DUSE_KUKA_LBR_DYNAMICS)
+# endif(USE_KUKA_LBR_DYNAMICS)
 
 SET (SAI2-COMMON_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/src)
 
 # include urdf, compiled with application
+# mlee note: need to check if any of these need dynamics3d... 
 SET(URDF_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/src/parser/)
 SET(URDF_SOURCE ${URDF_INCLUDE_DIR}/urdf/urdfdom/urdf_parser/src/pose.cpp
 		${URDF_INCLUDE_DIR}/urdf/urdfdom/urdf_parser/src/link.cpp
@@ -73,9 +100,9 @@ SET(URDF_SOURCE ${URDF_INCLUDE_DIR}/urdf/urdfdom/urdf_parser/src/pose.cpp
 		${URDF_INCLUDE_DIR}/urdf/boost_replacement/string_split.cpp
 		${URDF_INCLUDE_DIR}/urdf/boost_replacement/string_split.h)
 
-# include Simulation
-SET(SIMULATION_SOURCE ${PROJECT_SOURCE_DIR}/src/simulation/SimulationInterface.cpp
-	${PROJECT_SOURCE_DIR}/src/simulation/Sai2Simulation.cpp)
+# don't include Simulation
+#SET(SIMULATION_SOURCE ${PROJECT_SOURCE_DIR}/src/simulation/SimulationInterface.cpp
+#	${PROJECT_SOURCE_DIR}/src/simulation/Sai2Simulation.cpp)
 
 # include Graphics
 SET(GRAPHICS_SOURCE ${PROJECT_SOURCE_DIR}/src/graphics/GraphicsInterface.cpp
@@ -91,7 +118,7 @@ INCLUDE_DIRECTORIES (
 	${URDF_INCLUDE_DIR}
 	${CHAI3D_INCLUDE_DIRS}
 	${EIGEN3_INCLUDE_DIR}
-	${SAI2-SIMULATION_INCLUDE_DIRS}
+#	${SAI2-SIMULATION_INCLUDE_DIRS}
 	${RBDL_INCLUDE_DIR}
 	)
 
@@ -99,7 +126,7 @@ INCLUDE_DIRECTORIES (
 ADD_LIBRARY (sai2-common STATIC
 	${URDF_SOURCE}
 	${PARSER_SOURCE}
-	${SIMULATION_SOURCE}
+#	${SIMULATION_SOURCE}
 	${GRAPHICS_SOURCE}
 	${MODEL_SOURCE}
 	)
@@ -110,9 +137,9 @@ FIND_LIBRARY(RBDL_URDFREADER_LIBRARIES rbdl_urdfreader)
 SET (SAI2-COMMON_LIBRARIES sai2-common 
 	${TINYXML_LIBRARIES}
 	${CHAI3D_LIBRARIES}
-	${SAI2-SIMULATION_LIBRARIES}
+#	${SAI2-SIMULATION_LIBRARIES}
 	${RBDL_LIBRARIES} ${RBDL_URDFREADER_LIBRARIES}
-	${KukaLBRDynamics_LIBRARIES}
+#	${KukaLBRDynamics_LIBRARIES}
 	)
 
 # 
@@ -137,4 +164,4 @@ write_basic_package_version_file(
 )
 
 # add examples
-ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}/examples)
+# ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}/examples)
