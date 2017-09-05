@@ -1,12 +1,11 @@
-## Project name: sai2-common (version: 0.1.0)
+## Project name: sai2-common-lite (version: 0.1.0)
 Note: This project uses Semantic Versioning (http://semver.org/).
 
 ### Project description:
-The Sai2-Common library implements a set of simplifying interfaces and helper modules to create robot control applications. This includes the following modules:
+The Sai2-Common-Lite library implements a set of simplifying interfaces and helper modules to create robot control applications. Sai2-Common-Lite is the 'lite' version of the Sai2-Common library. It does not have the simulation module and can run on Windows. 
 
 * __parser__ module: to load a robot and world state specification from xml
 * __model__ module: creating articulated rigid body models to represent the robots, 
-* __simulation__ module: creating a virtual world with simulated physics, and
 * __graphics__ module: rendering the world graphically
 
 ### 3rdParty dependencies (* = installation required):
@@ -25,10 +24,33 @@ cmake -DRBDL_BUILD_ADDON_URDFREADER=ON -DRBDL_USE_ROS_URDF_LIBRARY=OFF ..
 ```
 
 ### SAI library dependencies:
-* Sai2-Simulation: Articulated rigid-body physics simulation [private at https://github.com/manips-sai/sai2-simulation, contact shameekg@stanford.edu]
+* 
 
 
 ### Installation instructions:
+-- Windows:
+* set EIGEN_INCLUDE_DIR  
+* set TINY_INCLUDE_DIR 
+* set RBDL_INCLUDE_DIR
+* set RBDL_LIBRARIES
+* set RBDL_URDFREADER_LIBRARIES 
+
+
+--> NOTE: 
+
+
+# if the installed or the using project don't have CMAKE_SIZEOF_VOID_P set, ignore it:
+if("${CMAKE_SIZEOF_VOID_P}" STREQUAL "" OR "8" STREQUAL "")
+   return()
+endif()
+
+# check that the installed version has the same 32/64bit-ness as the one which is currently searching:
+if(NOT CMAKE_SIZEOF_VOID_P STREQUAL "8")
+  math(EXPR installedBits "8 * 8")
+  set(PACKAGE_VERSION "${PACKAGE_VERSION} (${installedBits}bit)")
+  set(PACKAGE_VERSION_UNSUITABLE TRUE)
+endif()
+
 -- OSX/ Linux:
 
 1. mkdir build
@@ -39,7 +61,7 @@ cmake -DRBDL_BUILD_ADDON_URDFREADER=ON -DRBDL_USE_ROS_URDF_LIBRARY=OFF ..
 -- OSX/ Linux:
 
 1. rm -r build
-2. rm -r ~/.cmake/packages/SAI2-COMMON
+2. rm -r ~/.cmake/packages/SAI2-COMMON-LITE
 
 ### Getting started:
 Take a look at sample applications under examples/.
